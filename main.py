@@ -8,7 +8,9 @@ from scipy.interpolate import make_interp_spline
 def parse_fixture():
 
     #read the important columns from table
-    data = pd.read_csv(r"C:\Users\c.lansdowne\Box\My Cloud - c.lansdowne\_Desktop\FH_TracyQI19Fixture.csv", usecols = ['Time', 'ExtR'])
+    #data = pd.read_csv(r"C:\Users\c.lansdowne\Box\My Cloud - c.lansdowne\_Desktop\FH_TracyQI19Fixture.csv", usecols = ['Time', 'ExtR'])
+    data = pd.read_csv(r"C:\Users\c.lansdowne\Box\My Cloud - c.lansdowne\_Desktop\21C00201-001try.csv",
+                       usecols=['Time', 'ExtR'])
 
     #clean data
     data.dropna(subset = ['ExtR'], inplace=True)
@@ -24,9 +26,10 @@ def parse_fixture():
     #look ahead & tolerance range
     nominal = 720
     decel_margin = .35 #what % decrease of nominal (720) counts as starting deceleration
-    accel_margin = .1 #what % decrease of nominal counts as fully accelerated?
+    accel_margin = .2 #what % decrease of nominal counts as fully accelerated?
     zero_margin = .17 #what does the filter consider to be the turnaround point?
     lookahead = 3 #how many data points ahead does the filter sample?
+    threshold = .1
 
     #Zero R and find Velocity list
     initialR = data.iat[0,1]
@@ -45,9 +48,9 @@ def parse_fixture():
     # Main_spline = make_interp_spline(data['Time'],data['ExtRVelreg'])
     # x_ = np.linspace(data['Time'].min(), data['Time'].max(), 1000)
     # y_ = Main_spline(x_)
-    # plt.plot(x_, y_)
+    plt.plot(data['Time'], data['ExtRVel'])
 
-    fig, (ax1, ax2, ax3, ax4) = plt.subplots(3)
+    fig, (ax1, ax2, ax3) = plt.subplots(3)
     #ax1.plot(data['Time'], data['ExtRVel'])
 
     #initialize filter variables
@@ -102,21 +105,25 @@ def parse_fixture():
                 accel_start = 0
                 decel_end = 0
 
+    decel_times = [x for x in decel_times if x <= threshold]
+    accel_times = [x for x in accel_times if x <= threshold]
+    turnaround = [x for x in turnaround if x <= threshold]
+
     #plot decel times
     ax1.plot(decel_times, 'o')
     plt.ylabel('Deceleration time (s)')
     plt.xlabel('Turn #')
     ax1.set_title('Plot of all Deceleration times')
     #plot accel times
-    ax3.plot(accel_times, 'o')
+    ax2.plot(accel_times, 'o')
     plt.ylabel('Acceleration time (s)')
     plt.xlabel('Turn #')
-    ax3.set_title('Plot of all Acceleration times')
+    ax2.set_title('Plot of all Acceleration times')
     #plot accel times
-    ax4.plot(turnaround, 'o')
+    ax3.plot(turnaround, 'o')
     plt.ylabel('Turnaround time (s)')
     plt.xlabel('Turn #')
-    ax4.set_title('Plot of all Turnaround times')
+    ax3.set_title('Plot of all Turnaround times')
 
     #write to csv
     with open('C:/Users/c.lansdowne/Documents/GitHub/P1Accel/decel_times1.csv', 'w') as f:
